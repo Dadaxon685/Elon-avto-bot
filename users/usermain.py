@@ -335,7 +335,7 @@ from state.state import *
 from buttons.butons import tasqidlash 
 from data.config import admin_id
 # **Ma'lumotlar bazasi bilan ishlovchi funksiya**
-from database.databas import readadminstable, readusertable, insertusertable, readtableelonlar,delete_elon_from_db,inserttableelonlar
+from database.databas import readadminstable, readusertable, insertusertable, readtableelonlar,delete_elon_from_db,inserttableelonlar,insertizohlar
 
 user_router = Router()  # Foydalanuvchilar uchun router
 
@@ -365,8 +365,8 @@ user_router = Router()  # Foydalanuvchilar uchun router
 #     phone = State()
 
 # **Taklif yoki shikoyat uchun state**
-class TaklifShikoyat(StatesGroup):
-    matn = State()
+# class TaklifShikoyat(StatesGroup):
+#     matn = State()
 
 # **/start komandasi**
 @user_router.message(CommandStart())
@@ -473,7 +473,15 @@ async def delete_elon(callback_query: CallbackQuery):
 async def ask_feedback(message: Message, state: FSMContext):
     await state.clear()  # Holatni tozalash
     await message.answer("Taklif yoki shikoyatingizni yozib yuboring. ✅")
-    await state.set_state(TaklifShikoyat.matn)
+    await state.set_state(takliforshikoyat.matn)
+@user_router.message(takliforshikoyat.matn)
+async def answer(message: Message, state: FSMContext):
+    izoh = message.text
+    user_id = message.from_user.id
+    await state.update_data(taklif =user_id)
+    insertizohlar(user_id=user_id,izohi=izoh)  
+    await message.answer("Taklif/shikoyat yuborildi. Tez orada javob keladi.. ", reply_markup=user_btn)
+    await state.clear()
 
 # **Adminlar bilan bog'lanish**
 @user_router.message(F.text == "📞 Adminlar Bilan Bog'lanish 📞")
